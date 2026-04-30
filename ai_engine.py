@@ -1,7 +1,7 @@
 from groq import Groq
 import json
 import os
-client = Grok(api_key=os.getenv("GROQ_API_KEY"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # 🔹 STEP 1: SYSTEM PROMPT
 SYSTEM_PROMPT = """
