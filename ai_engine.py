@@ -1,6 +1,5 @@
 from groq import Groq
 import json
-
 import os
 client = Grok(api_key=os.getenv("GROK_API_KEY"))
 
