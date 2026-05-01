@@ -131,11 +131,30 @@ if uploaded_file:
 st.subheader("💬 Chat with Contract")
 
 user_input = st.text_input("Ask something")
+suggestions = [
+    "",
+    "Is there any penalty?",
+    "What are the risks?",
+    "Can I terminate early?",
+    "Is there a non-compete clause?",
+    "What should I be careful about?"
+]
 
+selected = st.selectbox("💡 Suggested Questions", suggestions)
+
+if selected:
+    st.session_state.user_input = selected
 if voice_enabled:
-    audio = mic_recorder(start_prompt="🎤 Speak", stop_prompt="⏹ Stop")
+    audio = mic_recorder(
+        start_prompt="🎤 Speak",
+        stop_prompt="⏹ Stop",
+        key="voice_input"
+    )
+
     if audio:
-        user_input = "Explain risks"
+        # 🔥 TEMP FIX (since no speech-to-text)
+        user_input = "Explain important risks"
+        st.session_state.user_input = user_input
 
 if st.button("Send") and user_input:
     if client:
