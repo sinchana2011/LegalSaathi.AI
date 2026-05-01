@@ -130,9 +130,9 @@ if uploaded_file:
 # -------- CHAT --------
 st.subheader("💬 Chat with Contract")
 
-user_input = st.text_input("Ask something")
+# -------- SUGGESTED QUESTIONS --------
 suggestions = [
-    "",
+    "Type your question...",
     "Is there any penalty?",
     "What are the risks?",
     "Can I terminate early?",
@@ -140,7 +140,14 @@ suggestions = [
     "What should I be careful about?"
 ]
 
-selected = st.selectbox("💡 Suggested Questions", suggestions)
+selected = st.selectbox("💡 Ask something", suggestions)
+
+# -------- INPUT BOX --------
+user_input = st.text_input(
+    "",
+    value="" if selected == "Type your question..." else selected,
+    key="chat_input"
+)
 
 if selected:
     st.session_state.user_input = selected
