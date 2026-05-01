@@ -128,9 +128,14 @@ if uploaded_file:
             st.write(translate(c))
 
 # -------- CHAT --------
-st.subheader("💬 Chat with Contract")
+# -------- CHAT SECTION --------
+st.subheader("💬 Chat with your Contract")
 
-# -------- SUGGESTED QUESTIONS --------
+# ---------------- SESSION SAFETY ----------------
+if "chat_input" not in st.session_state:
+    st.session_state.chat_input = ""
+
+# -------- SUGGESTIONS --------
 suggestions = [
     "Type your question...",
     "Is there any penalty?",
@@ -142,15 +147,24 @@ suggestions = [
 
 selected = st.selectbox("💡 Ask something", suggestions)
 
-# -------- INPUT BOX --------
-user_input = st.text_input(
-    "",
-    value="" if selected == "Type your question..." else selected,
-    key="chat_input"
-)
+if selected != "Type your question...":
+    st.session_state.chat_input = selected
 
-if selected:
-    st.session_state.user_input = selected
+
+# -------- INPUT + BUTTON LAYOUT --------
+col1, col2 = st.columns([8, 2])
+
+with col1:
+    user_input = st.text_input(
+        "",
+        key="chat_input"
+    )
+
+with col2:
+    send_clicked = st.button("Send")
+
+
+# -------- VOICE INPUT --------
 if voice_enabled:
     audio = mic_recorder(
         start_prompt="🎤 Speak",
@@ -159,26 +173,35 @@ if voice_enabled:
     )
 
     if audio:
-        # 🔥 TEMP FIX (since no speech-to-text)
-        user_input = "Explain important risks"
-        st.session_state.user_input = user_input
+        # 🔥 Simulated voice → text
+        st.session_state.chat_input = "Explain important risks in this contract"
+        st.success("Voice input captured!")
 
-if st.button("Send") and user_input:
+
+# -------- SEND LOGIC --------
+if send_clicked and st.session_state.chat_input:
+
+    question = st.session_state.chat_input
+
     if client:
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": user_input}]
+            messages=[{"role": "user", "content": question}]
         )
         answer = response.choices[0].message.content
     else:
         answer = "AI not available"
 
-    st.session_state.chat_history.append(("You", user_input))
+    st.session_state.chat_history.append(("You", question))
     st.session_state.chat_history.append(("AI", answer))
 
+    # 🔥 CLEAR INPUT
+    st.session_state.chat_input = ""
+
+
+# -------- DISPLAY CHAT --------
 for role, msg in st.session_state.chat_history:
     st.write(f"**{role}:** {msg}")
-
 # -------- REVIEW --------
 st.subheader("⭐ Review")
 
