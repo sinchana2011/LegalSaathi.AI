@@ -1,7 +1,7 @@
 import streamlit as st
 import fitz
 import re
-from ai_engine import analyze_contract_clean, client
+from ai_engine import analyze_contract_clean
 from streamlit_mic_recorder import mic_recorder
 
 st.set_page_config(page_title="LegalSaathi", layout="wide")
