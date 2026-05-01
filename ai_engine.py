@@ -1,20 +1,35 @@
 import os
+import json
 import streamlit as st
 from groq import Groq
-import json
 
-# ---------------- SAFE CLIENT ----------------
+# -------- SAFE API KEY --------
 def get_api_key():
     try:
         return st.secrets["GROQ_API_KEY"]
     except:
         return os.getenv("GROQ_API_KEY")
 
-client = Groq(api_key=get_api_key())
+client = None
+
+try:
+    client = Groq(api_key=get_api_key())
+except Exception as e:
+    print("Client init error:", e)
+    client = None
 
 
-# ---------------- MAIN FUNCTION ----------------
+# -------- MAIN FUNCTION --------
 def analyze_contract_clean(text):
+
+    # 🔒 If client fails, don't crash UI
+    if client is None:
+        return {
+            "summary": "AI not available. Check API key.",
+            "simplified": "Unable to process contract.",
+            "red_flags": [],
+            "missing_clauses": []
+        }
 
     SYSTEM_PROMPT = """
     You are a legal AI assistant.
@@ -23,21 +38,22 @@ def analyze_contract_clean(text):
 
     Format:
     {
-        "summary": "Detailed legal summary in 5-6 lines",
-        "simplified": "Explain in very simple language for a normal person",
+        "summary": "5-6 line legal summary",
+        "simplified": "Explain in simple language",
         "red_flags": [
             {"clause": "text", "severity": "High"},
             {"clause": "text", "severity": "Medium"}
         ],
         "missing_clauses": [
             "Termination clause",
+            "Penalty clause",
             "Dispute resolution clause"
         ]
     }
 
     Rules:
-    - Always return valid JSON
-    - Do NOT add extra text outside JSON
+    - ONLY return JSON
+    - NO extra text
     """
 
     try:
@@ -51,15 +67,15 @@ def analyze_contract_clean(text):
 
         output = response.choices[0].message.content.strip()
 
-        # 🧠 Clean JSON (important for Groq responses)
+        # 🔥 Clean markdown JSON if present
         if "```" in output:
-            output = output.split("```")[1]
+            parts = output.split("```")
+            output = parts[1]
             if output.startswith("json"):
-                output = output.replace("json", "", 1)
+                output = output.replace("json", "", 1).strip()
 
         data = json.loads(output)
 
-        # ✅ Ensure all keys exist (VERY IMPORTANT)
         return {
             "summary": data.get("summary", ""),
             "simplified": data.get("simplified", ""),
@@ -68,9 +84,11 @@ def analyze_contract_clean(text):
         }
 
     except Exception as e:
-        # 🔥 fallback (prevents UI breaking)
+        print("AI error:", e)
+
+        # 🔥 fallback so UI never breaks
         return {
-            "summary": "Unable to generate summary.",
+            "summary": "Error generating summary.",
             "simplified": "Try again.",
             "red_flags": [],
             "missing_clauses": []
